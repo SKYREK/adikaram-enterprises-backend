@@ -14,18 +14,12 @@ export const loginUser = async (req, res) => {
         if (!user) {
             return res.status(401).send('User not found.');
         }
-        // Generate hash
-        
-        
 
         const passwordIsValid = await bcrypt.compare(password, user.password_hash);
         if (!passwordIsValid) {
             return res.status(401).send('Authentication failed.');
         }
         
-
-
-
         const token = generateToken({ id: user.email, role: user.role_name });
         res.json({ auth: true, token });
     } catch (error) {
