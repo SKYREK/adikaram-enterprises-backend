@@ -1,29 +1,44 @@
-import bcrypt from 'bcryptjs';
-import { findUserByEmail } from '../models/userModel.js';
-import { generateToken } from '../utils/tokenManager.js';
+import bcrypt from "bcryptjs";
+import { findUserByEmail, getPrivilegesList } from "../models/userModel.js";
+import { generateToken } from "../utils/tokenManager.js";
 
 export const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).send('Email and password are required.');
+  if (!email || !password) {
+    return res.status(400).send("Email and password are required.");
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(401).send("User not found.");
     }
 
-    try {
-        const user = await findUserByEmail(email);
-        if (!user) {
-            return res.status(401).send('User not found.');
-        }
-
-        const passwordIsValid = await bcrypt.compare(password, user.password_hash);
-        if (!passwordIsValid) {
-            return res.status(401).send('Authentication failed.');
-        }
-        
-        const token = generateToken({ id: user.email, role: user.role_name });
-        res.json({ auth: true, token });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).send('There was a problem logging in.');
+    const passwordIsValid = await bcrypt.compare(password, user.password_hash);
+    if (!passwordIsValid) {
+      return res.status(401).send("Authentication failed.");
     }
+    const privileges = await getPrivilegesList(email);
+
+    const token = generateToken({
+      userData: user,
+      privileges,
+    });
+    res.json({ auth: true, user, token, privileges });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).send("There was a problem logging in.");
+  }
 };
+
+export const getUser = (req,res)=>{
+    if(req.user){
+        res.json(req.user);
+    }else{
+        res.json({
+            error: 'User not found',
+            description : "User not found in the request please try login again or contact developer on malithdilshan27@gmail.com"
+        });
+    }
+}
