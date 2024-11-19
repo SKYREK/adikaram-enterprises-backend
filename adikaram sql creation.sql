@@ -188,6 +188,45 @@ CREATE TABLE `return_item` (
     CONSTRAINT `FK_RETURN_ITEM_SHOP` FOREIGN KEY (`shop`) REFERENCES `shop`(`shop_id`)
 );
 
+-- Create the 'visit_collection' table
+-- visit id, payment id, verified by(user foreign key, nullable), notes, status (default 'pending')
+CREATE TABLE `visit_collection` (
+    `visit_id` INT,
+    `payment_id` INT,
+    `verified_by` VARCHAR(255),
+    `notes` TEXT,
+    `status` VARCHAR(100) DEFAULT 'pending',
+    CONSTRAINT `PK_VISIT_COLLECTION` PRIMARY KEY (`visit_id`, `payment_id`),
+    CONSTRAINT `FK_VISIT_COLLECTION_VISIT` FOREIGN KEY (`visit_id`) REFERENCES `visit`(`visit_id`),
+    CONSTRAINT `FK_VISIT_COLLECTION_PAYMENT` FOREIGN KEY (`payment_id`) REFERENCES `payment`(`payment_id`),
+    CONSTRAINT `FK_VISIT_COLLECTION_USER` FOREIGN KEY (`verified_by`) REFERENCES `user`(`email`)
+);
+
+-- Create the 'visit_verification' table
+-- visit id, verified_by(user foreign key), notes, date and time
+CREATE TABLE `visit_verification` (
+    `visit_id` INT,
+    `verified_by` VARCHAR(255),
+    `notes` TEXT,
+    `date_and_time` DATETIME,
+    CONSTRAINT `PK_VISIT_VERIFICATION` PRIMARY KEY (`visit_id`, `verified_by`),
+    CONSTRAINT `FK_VISIT_VERIFICATION_VISIT` FOREIGN KEY (`visit_id`) REFERENCES `visit`(`visit_id`),
+    CONSTRAINT `FK_VISIT_VERIFICATION_USER` FOREIGN KEY (`verified_by`) REFERENCES `user`(`email`)
+);
+
+-- Create the 'shop_visit' table
+-- shop id, visit id, notes, status [primary key is shop id + visit id]
+CREATE TABLE `shop_visit` (
+    `shop_id` INT,
+    `visit_id` INT,
+    `notes` TEXT,
+    `status` VARCHAR(100),
+    CONSTRAINT `PK_SHOP_VISIT` PRIMARY KEY (`shop_id`, `visit_id`),
+    CONSTRAINT `FK_SHOP_VISIT_SHOP` FOREIGN KEY (`shop_id`) REFERENCES `shop`(`shop_id`),
+    CONSTRAINT `FK_SHOP_VISIT_VISIT` FOREIGN KEY (`visit_id`) REFERENCES `visit`(`visit_id`)
+);
+
+
 -- Trigger to handle the auto increment of item_id in bill_item table
 DELIMITER $$
 CREATE TRIGGER `TRG_AUTO_INCREMENT_ITEM_ID` BEFORE INSERT ON `bill_item`
@@ -238,3 +277,4 @@ VALUES (
     'Admin', 
     '$2y$12$W3ulNwQG7ssME77.nA.SQO7E5gUL3yC9i9ZmMA1a6Fg2/9BHV1HqC' -- This is a bcrypt hash for 'AdminPass123!'
 );
+
